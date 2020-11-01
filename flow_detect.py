@@ -2,7 +2,6 @@ import time
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from flowdetect import MyKNN, mySVC, MyLogiRe, myRf, MyBYS, MyMLP, myVoting, myStacking, vis
-from flowdetect.Class_DATA_init import DATA_init
 
 
 
@@ -115,6 +114,6 @@ while (True):
             exit(1)
 
         study.predict()
-        study.createpage(file_path)
+        # study.createpage(file_path)
 
 

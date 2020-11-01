@@ -1,9 +1,12 @@
 import os
+import time
 
 from scapy.utils import RawPcapReader
 from scapy.layers.l2 import Ether
 from scapy.layers.inet import IP, TCP
 import pandas as pd
+
+from flowdetect import MyKNN
 
 
 class Conversition:
@@ -121,6 +124,8 @@ def train():
 
 
 def getAnalyseData(myAddr, conversitions):
+    if not os.path.exists('./csv/'):
+        os.makedirs('./csv/')
     l = []
     for c in conversitions:
         if c.stream == 0:
@@ -130,19 +135,27 @@ def getAnalyseData(myAddr, conversitions):
         cl.append(c.upStream / c.stream)
         cl.append(c.pStream / c.stream)
         cl.append(c.upBigStream / c.stream)
+        cl.append('')
         cl.append(c.myAddr)
         cl.append(c.targetAddr)
         l.append(cl)
     # name = ['DownSmallStream', 'UpStream', 'PushStream', 'UpBigStream', 'lable']
     csv = pd.DataFrame(data=l)
-    csv.to_csv("./analyse.csv", mode='a', header=False, index=False)
+    filePath = './csv/' + time.strftime("%Y%m%d_%H%M%S", time.localtime()) + '.csv'
+    csv.to_csv(filePath, header=False, index=False)
+    return filePath
 
 
 def analyse(filePath, myAddr):
     conversitions = resolvePack(filePath, myAddr)
-    getAnalyseData(myAddr, conversitions)
+    path = getAnalyseData(myAddr, conversitions)
+    f = pd.read_csv(path)
+    x_test = f.iloc[:, 0:4]
+    study = MyKNN.MyKNN(None, None, x_test, None, True)
+    study.predict()
+    study.createpage(path)
 
 
 if __name__ == '__main__':
     train()
-    analyse(filePath="",myAddr="")
+    analyse(filePath="", myAddr="")

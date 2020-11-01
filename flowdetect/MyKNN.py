@@ -31,7 +31,7 @@ class MyKNN:
 
     def predict(self):
         if self.isJoblib is True:
-            self.knn = joblib.load('pkls/knn.pkl')
+            self.knn = joblib.load('./pkls/knn.pkl')
         self.y_pred = self.knn.predict(self.x_test)
         print(self.y_pred)
 

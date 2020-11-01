@@ -1,7 +1,8 @@
 # coding:utf-8
 from scapy.all import *
-from scapy.layers.tls.handshake import TLSClientHello
 from scapy.layers.tls.record import TLS
+from Processing import analyse
+import _thread
 import time
 
 
@@ -14,6 +15,7 @@ class TLSSniffer:
     def __init__(self):
         self.ifaces = NetworkInterfaceDict()
         self.iface = None
+        self.ip = None
         ifaces.load()
 
     def selectIface(self):
@@ -29,34 +31,20 @@ class TLSSniffer:
             for i in ifaces.data:
                 if ifaces.data[i].win_index == int(index):
                     self.iface = ifaces.data[i].description
+                    self.ip = ifaces.data[i].ip
 
-    def processCap(self, fileName):
-        packet = rdpcap(fileName)
-        res_key = os.path.basename(fileName)
-        res = {}
-        extenList = []
-        for item in packet:
-            if item.haslayer(TLSClientHello):
-                clienthello = item.getlayer(TLSClientHello)
-                if clienthello.haslayer(TLSExtension):
-                    extnum = len(clienthello.extensions)
-                    for i in range(1, extnum + 1):
-                        extension = clienthello.getlayer(TLSExtension, i)
-                        exten = '{:04x}'.format(extension.type)
-                        extenList.append(exten)
-                break
-        res[res_key] = extenList
-        return res
-
-    def main(self):
+    def start(self):
+        if not os.path.exists('./pcap/'):
+            os.makedirs('./pcap/')
         self.selectIface()
         load_layer("tls")
         while True:
-            packets = sniff(iface=self.iface, prn=lambda x: x.summary(), timeout=120, lfilter=lambda x: TLS in x)
-            pcapName = time.strftime("%Y%m%d_%H%M%S", time.localtime()) + '.pcap'
-            wrpcap(pcapName, packets)
+            packets = sniff(iface=self.iface, prn=lambda x: x.summary(), timeout=20, lfilter=lambda x: TLS in x)
+            pcapPath = './pcap/' + time.strftime("%Y%m%d_%H%M%S", time.localtime()) + '.pcap'
+            wrpcap(pcapPath, packets)
+            _thread.start_new_thread(analyse, (pcapPath, self.ip))
 
 
 if __name__ == '__main__':
     sniffer = TLSSniffer()
-    sniffer.main()
+    sniffer.start()
