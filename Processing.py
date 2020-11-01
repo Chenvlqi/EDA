@@ -20,10 +20,10 @@ class Conversition:
         self.targetAddr = addr2
 
 
-def resolvePack(fileName, myAddr, targetAddr):
+def resolvePack(fileName, myAddr):
     conversitions = []
-    c = Conversition(myAddr, targetAddr)
-    conversitions.append(c)
+    # c = Conversition(myAddr, targetAddr)
+    # conversitions.append(c)
     for (pkt_data, pkt_metadata,) in RawPcapReader(fileName):
         ether_pkt = Ether(pkt_data)
 
@@ -98,10 +98,10 @@ def getTrainningdata(myAddr, targetAddr, conversitions):
         l.append(cl)
     # name = ['DownSmallStream', 'UpStream', 'PushStream', 'UpBigStream', 'lable']
     csv = pd.DataFrame(data=l)
-    csv.to_csv("./pyf.csv", mode='a', header=False, index=False)
+    csv.to_csv("./t.csv", mode='a', header=False, index=False)
 
 
-if __name__ == '__main__':
+def train():
     # fileName = "2.pcap"
     filePath = "./dzh/"
     allFile = os.listdir(filePath)
@@ -116,5 +116,33 @@ if __name__ == '__main__':
         # myAddr = "10.21.196.121"
         myAddr = "192.168.122.146"
         targetAdder = "122.51.19.183"
-        conversitions = resolvePack(filePath + fileName, myAddr, targetAdder)
+        conversitions = resolvePack(filePath + fileName, myAddr)
         getTrainningdata(myAddr, targetAdder, conversitions)
+
+
+def getAnalyseData(myAddr, conversitions):
+    l = []
+    for c in conversitions:
+        if c.stream == 0:
+            continue
+        cl = []
+        cl.append(c.smallDownStream / c.stream)
+        cl.append(c.upStream / c.stream)
+        cl.append(c.pStream / c.stream)
+        cl.append(c.upBigStream / c.stream)
+        cl.append(c.myAddr)
+        cl.append(c.targetAddr)
+        l.append(cl)
+    # name = ['DownSmallStream', 'UpStream', 'PushStream', 'UpBigStream', 'lable']
+    csv = pd.DataFrame(data=l)
+    csv.to_csv("./analyse.csv", mode='a', header=False, index=False)
+
+
+def analyse(filePath, myAddr):
+    conversitions = resolvePack(filePath, myAddr)
+    getAnalyseData(myAddr, conversitions)
+
+
+if __name__ == '__main__':
+    train()
+    analyse(filePath="",myAddr="")
